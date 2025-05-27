@@ -2,6 +2,7 @@ import User from "../models/user.models.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import options from "../utils/cookie_opt.js";
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -12,13 +13,16 @@ const generateAccessAndRefreshToken = async (userId) => {
 
         user.refreshToken = refreshToken
 
+        // Saving user without validation 
         await user.save({ ValidateBeforeSave: false })
+
         return { accessToken, refreshToken };
     } catch (error) {
         throw new ApiError(500, "Something went wrong while generating refresh and access token")
     }
 }
 
+// Controller that facilitate the functionality of Register new user
 const registerUser = asyncHandler(
     async (req, res) => {
         // find details from req
@@ -77,7 +81,7 @@ const registerUser = asyncHandler(
     }
 );
 
-
+// Controller that facilitate the functionality of Login
 const loginUser = asyncHandler(
     async (req, res) => {
         // find login details from req.body ---> phone number
@@ -113,14 +117,36 @@ const loginUser = asyncHandler(
         }
 
         // Generating Refresh and Access Token and saving refresh Token in db
-        const { refreshToken, accessToken } = generateAccessAndRefreshToken(user?._id);
+        const { refreshToken, accessToken } = await generateAccessAndRefreshToken(user?._id);
 
         const loggedInUser = await User.findById(user?._id).select("-password -refreshToken")
         // console.log(loggedInUser)
 
         return res
             .status(200)
-            .json(new ApiResponse(200, { user: loggedInUser, refreshToken, accessToken }, "User logged in successfully"))
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .json(new ApiResponse(200,
+                { user: loggedInUser, refreshToken, accessToken },
+                "User logged in successfully"),
+            )
     });
 
-export { registerUser, loginUser }
+// Controller that facilitate the functionality of Logout
+const logoutUser = asyncHandler(async (req, res) => {
+    const user = await User.findByIdAndUpdate(req.user?._id,
+        {
+            $set: [
+                { refreshToken: null }
+            ]
+        },
+        { new: true }
+    );
+
+    res.status(200).json(new ApiResponse(200, "User has been logged out successfully"))
+
+})
+
+
+
+export { registerUser, loginUser, logoutUser }

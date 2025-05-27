@@ -1,9 +1,11 @@
 import cors from 'cors';
 import express from 'express';
+import cookieParser from 'cookie-parser';
+
 import userRouter from './routes/user.routes.js';
 
 const app = express();
-// app.listen(process.env.PORT)
+
 // app.get("/aftab", (req, res) => {
 //     res.send("hello")
 // }).on("error", (error) => {
@@ -20,9 +22,15 @@ app.use(
     })
 );
 
-app.use(express.json({ limit: "16kb" }))
-app.use(express.urlencoded({ extended: true }))
+// cookie-parser is used to send data in form of cookie
+app.use(cookieParser())
 
+app.use(express.json({ limit: "16kb" }))
+
+//recieving data from url
+app.use(express.urlencoded({ extended: true, limit: "10kb"}))
+
+// user api link
 app.use("/api/v1/user", userRouter)
 
 
