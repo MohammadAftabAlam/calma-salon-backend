@@ -130,23 +130,70 @@ const loginUser = asyncHandler(
                 { user: loggedInUser, refreshToken, accessToken },
                 "User logged in successfully"),
             )
-    });
+    }
+);
 
 // Controller that facilitate the functionality of Logout
-const logoutUser = asyncHandler(async (req, res) => {
-    const user = await User.findByIdAndUpdate(req.user?._id,
-        {
-            $set: [
-                { refreshToken: null }
-            ]
-        },
-        { new: true }
-    );
+const logoutUser = asyncHandler(
+    async (req, res) => {
+        const user = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $set:
+                    { refreshToken: null }
 
-    res.status(200).json(new ApiResponse(200, "User has been logged out successfully"))
+            },
+            { new: true }
+        ).select("-password -refreshToken");
 
-})
+        res
+            .status(200)
+            .clearCookie("accessToken", user?.accessToken, options)
+            .clearCookie("refreshToken", user?.refreshToken, options)
+            .json(new ApiResponse(200, "User has been logged out successfully"))
+    }
+);
 
+const editProfile = asyncHandler(
 
+    // validate input {name and email}
+    // find user
+    // Update the fields 
+    // return response 
 
-export { registerUser, loginUser, logoutUser }
+    async (req, res) => {
+        const { name, email } = req.body;
+
+        // If any of the fields are empty
+        if ([name, email].some((field) => { field.trim() === "" })) {
+            throw new ApiError(401, "All fields are required");
+        }
+
+        // Updating existing name and password
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $set: { name, email }
+            },
+            {
+                new: true
+            }
+        ).select("-password -refreshToken")
+
+        // sending response to the user
+        res
+            .status(200)
+            .json(
+                new ApiResponse(200,
+                    { user: updatedUser },
+                    "Fields are updated Successfully"),
+            )
+    }
+);
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    editProfile,
+}
