@@ -1,3 +1,5 @@
+import bcrypt from "bcrypt";
+
 import User from "../models/user.models.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -154,6 +156,7 @@ const logoutUser = asyncHandler(
     }
 );
 
+// Controller to edit profile
 const editProfile = asyncHandler(
 
     // validate input {name and email}
@@ -191,9 +194,52 @@ const editProfile = asyncHandler(
     }
 );
 
+// Controllers to change password
+const changePassword = asyncHandler(
+    async (req, res) => {
+        const { currrentPassword, newPassword, confirmNewPassword } = req.body;
+
+        const isCurrentPasswordCorrect = await req.user.isPasswordCorrect(currrentPassword);
+
+        if (!isCurrentPasswordCorrect) {
+            throw new ApiError(401, "Invalid password");
+        }
+
+        // Checking whether both newpassword and confirmNewPassword is similiar
+        if (!(newPassword === confirmNewPassword)) {
+            throw new ApiError(401, "password doesn't matched");
+        }
+
+        // Hashed password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        //Save new password and remove password from response
+        const user = await User.findByIdAndUpdate(
+            req.user?._id,
+            { $set: { password: hashedPassword } },
+            { new: true }
+        ).select("-password -refreshToken");
+
+        // Check whether update operation performed
+        if (!user) {
+            throw new ApiError(500, "Something went wrong while updating password")
+        }
+
+        // sending response 
+        res
+            .status(200)
+            .json(new ApiResponse(200,
+                { user: user },
+                "Password updated successfully")
+            )
+    }
+);
+
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     editProfile,
+    changePassword,
 }

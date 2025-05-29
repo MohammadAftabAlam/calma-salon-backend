@@ -9,28 +9,26 @@ const verifyUserWithJWT = asyncHandler(async (req, res, next) => {
         var token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
         // const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
         const decodToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        console.log(`DecodedToken: ${decodToken._id}`)
 
-
+        //Checking whether token is verified or not 
         if (!decodToken) {
             throw new ApiError(401, "Unauthorized request")
         }
 
+        // finding user form Db
         const user = await User.findById(decodToken?._id);
-        console.log(user);
 
+        // if user not present 
         if (!user) {
             throw new ApiError(401, "Invalid Access Token")
         }
 
+        // populating user inside req 
         req.user = user;
+
+        // Calling next middleware
         next();
     } catch (error) {
-        console.log(`Token: ${token}`)
-        console.log(`\n\nVerifying JWT: ${jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)}\n\n`)
-
-        console.log(`\n\nAccess Token : ${process.env.ACCESS_TOKEN_SECRET}\n\n`)
-        console.log(`${error}`)
         throw new ApiError(401, error?.message || "Invalid Access Token")
     }
 });
