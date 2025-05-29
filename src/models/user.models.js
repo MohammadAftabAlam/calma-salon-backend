@@ -7,11 +7,14 @@ const userSchema = new mongoose.Schema(
         name: {
             type: String,
             required: true,
-            lowercase: true
         },
         age: {
             type: Number,
-            required: true
+            required: true,
+            validate: {
+                validator: Number.isInteger,
+                message: '{VALUE} is not an integer value'
+              }
         },
         gender: {
             type: String,
@@ -22,11 +25,13 @@ const userSchema = new mongoose.Schema(
         phoneNumber: {
             type: String,
             required: true,
+            uniqe: true,
             // match: '/^[0-9]{10}$/',
         },
         email: {
             type: String,
             required: true,
+            unique: true,
         },
         password: {
             type: String,

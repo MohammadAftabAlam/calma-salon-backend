@@ -167,9 +167,20 @@ const editProfile = asyncHandler(
     async (req, res) => {
         const { name, email } = req.body;
 
-        // If any of the fields are empty
+        // Check for empty fields
         if ([name, email].some((field) => { field.trim() === "" })) {
             throw new ApiError(401, "All fields are required");
+        }
+
+        // Check if email is already used by another user 
+        const isEmailExist = await User.findOne({
+            _id: {
+                $ne: req.user._id  // Exclude current user
+            },
+            email
+        })
+        if (isEmailExist) {
+            throw new ApiError(401, "Email already exist, use another one")
         }
 
         // Updating existing name and password
