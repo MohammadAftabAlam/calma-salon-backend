@@ -1,6 +1,9 @@
 import { Router } from "express";
-import { registerUser, loginUser, logoutUser, editProfile, changePassword } from "../controllers/user.controller.js";
 import { verifyUserWithJWT } from "../middlewares/auth.middleware.js";
+import { uploadStaticServicesImage } from "../controllers/uploadImages.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+
+import { registerUser, loginUser, logoutUser, editProfile, changePassword } from "../controllers/user.controller.js";
 
 const router = Router();
 
@@ -17,9 +20,21 @@ router.route("/login").post(loginUser);
 router.route("/logout").post(verifyUserWithJWT, logoutUser);
 
 //edit profile route
-router.route("/editProfile").post(verifyUserWithJWT, editProfile);
+router.route("/edit-profile").post(verifyUserWithJWT, editProfile);
 
 //change password route
-router.route("/changePassword").post(verifyUserWithJWT, changePassword);
+router.route("/change-password").post(verifyUserWithJWT, changePassword);
+
+// services route
+router.route("/addServices").post(
+    verifyUserWithJWT,
+    upload.fields(
+        [{
+            name: "serviceImage",
+            maxCount: 1
+        }]
+    ),
+    uploadStaticServicesImage
+);
 
 export default router

@@ -2,7 +2,7 @@ import mongoose, { mongo } from "mongoose";
 
 const serviceSchema = new mongoose.Schema(
     {
-        imageUrl: {
+        serviceImageUrl: {
             type: String,
             required: true,
         },
