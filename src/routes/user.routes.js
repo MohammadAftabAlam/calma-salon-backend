@@ -1,15 +1,16 @@
 import { Router } from "express";
-import { verifyUserWithJWT } from "../middlewares/auth.middleware.js";
-import { uploadStaticServicesImage } from "../controllers/uploadImages.controller.js";
-import { upload } from "../middlewares/multer.middleware.js";
 
-import { registerUser, loginUser, logoutUser, editProfile, changePassword } from "../controllers/user.controller.js";
+import { verifyUserWithJWT } from "../middlewares/auth.middleware.js";
+import { uploadStaticServicesImage, getAllStaticMenServices, getAllStaticWomenServices } from "../controllers/uploadImages.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+import { registerUser, loginUser, logoutUser, changeCurrentUserProfile, changeCurrentUserPassword } from "../controllers/user.controller.js";
 
 const router = Router();
 
-router.get("/aftab", (req, res) => {
-    res.send("Aftab")
-})
+// router.get("/aftab", (req, res) => {
+//     res.send("Aftab")
+// })
+
 // route to register user
 router.route("/register").post(registerUser);
 
@@ -20,14 +21,13 @@ router.route("/login").post(loginUser);
 router.route("/logout").post(verifyUserWithJWT, logoutUser);
 
 //edit profile route
-router.route("/edit-profile").post(verifyUserWithJWT, editProfile);
+router.route("/edit-profile").post(verifyUserWithJWT, changeCurrentUserProfile);
 
 //change password route
-router.route("/change-password").post(verifyUserWithJWT, changePassword);
+router.route("/change-password").post(verifyUserWithJWT, changeCurrentUserPassword);
 
 // services route
 router.route("/addServices").post(
-    verifyUserWithJWT,
     upload.fields(
         [{
             name: "serviceImage",
@@ -37,4 +37,9 @@ router.route("/addServices").post(
     uploadStaticServicesImage
 );
 
+// get all men static services
+router.route("/getMenServices").get(getAllStaticMenServices);
+
+// get all women static services
+router.route("/getWoenServices").get(getAllStaticWomenServices);
 export default router

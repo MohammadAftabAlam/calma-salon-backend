@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
             validate: {
                 validator: Number.isInteger,
                 message: '{VALUE} is not an integer value'
-              }
+            }
         },
         gender: {
             type: String,
@@ -64,7 +64,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 // Generating Refresh Token
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign({
-        _id: this._id
+        _id: this._id,
+        tokenType: 'refresh',
     },
         process.env.REFRESH_TOKEN_SECRET,
         {
@@ -77,7 +78,8 @@ userSchema.methods.generateRefreshToken = function () {
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
-            _id: this._id
+            _id: this._id,
+            tokenType: 'access'
         },
         process.env.ACCESS_TOKEN_SECRET,
         {

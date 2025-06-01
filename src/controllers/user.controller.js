@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import jwt from 'jsonwebtoken';
 
 import User from "../models/user.models.js"
 import { ApiError } from "../utils/ApiError.js";
@@ -156,8 +157,34 @@ const logoutUser = asyncHandler(
     }
 );
 
+// update refreshAccessToken 
+const refreshAccessToken = asyncHandler(
+    async (req, res) => {
+        incomingAccessToken = req.cookies.accessToken || req.body.accessToken;
+
+        if (!incomingAccessToken) {
+            throw new ApiError(403, "Unauthorized Request")
+        }
+
+        const decodedAccessToken = jwt.verify(incomingAccessToken, process.env.ACCESS_TOKEN_SECRET)
+
+        const user = await User.findById(decodedAccessToken._id)
+
+        if (!user) {
+            throw new ApiError(401, "Invalid refresh token")
+        }
+
+
+    }
+)
+
+// Getting user details
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res.status(200).json(new ApiResponse(200, req.user, "Current User fetched successfully"));
+});
+
 // Controller to edit profile
-const editProfile = asyncHandler(
+const changeCurrentUserProfile = asyncHandler(
 
     // validate input {name and email}
     // find user
@@ -206,7 +233,7 @@ const editProfile = asyncHandler(
 );
 
 // Controllers to change password
-const changePassword = asyncHandler(
+const changeCurrentUserPassword = asyncHandler(
     async (req, res) => {
         const { currrentPassword, newPassword, confirmNewPassword } = req.body;
 
@@ -247,10 +274,11 @@ const changePassword = asyncHandler(
 );
 
 
+
 export {
     registerUser,
     loginUser,
     logoutUser,
-    editProfile,
-    changePassword,
+    changeCurrentUserProfile,
+    changeCurrentUserPassword,
 }

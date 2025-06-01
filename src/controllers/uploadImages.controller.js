@@ -59,4 +59,44 @@ const uploadStaticServicesImage = asyncHandler(
     }
 );
 
-export { uploadStaticServicesImage }
+// Getting all static Men services
+const getAllStaticMenServices = asyncHandler(
+    async (req, res) => {
+        // getting men static services from db
+        const menStaticServices = await Services.find({ category: { $eq: "men" } });
+
+        // checking
+        if (!menStaticServices) {
+            throw new ApiError(404, "Something went wrong while fetching services from db");
+        }
+        // console.log(menStaticServices);
+        return res
+            .status(200)
+            .json(new ApiResponse(200,
+                { menStaticServices },
+                "Successfull"),
+            );
+    }
+);
+
+// Getting all static Women services
+const getAllStaticWomenServices = asyncHandler(
+    async (req, res) => {
+
+        // getting men static services from db
+        const womenStaticServices = await Services.find({ category: { $eq: "women" } });
+
+        if (!womenStaticServices) {
+            throw new ApiError(404, "Something went wrong while fetching services from db");
+        }
+        // console.log(womenStaticServices);
+        return res
+            .status(200)
+            .json(new ApiResponse(200,
+                { womenStaticServices },
+                "Successfull"),
+            );
+    }
+);
+
+export { uploadStaticServicesImage, getAllStaticMenServices, getAllStaticWomenServices }
