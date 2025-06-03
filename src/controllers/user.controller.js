@@ -79,7 +79,7 @@ const registerUser = asyncHandler(
         return res
             .status(200)
             .json(
-                new ApiResponse(200, createdUser, "User has been registered successfully registered"),
+                new ApiResponse(200, createdUser, "User has registered successfully"),
             )
     }
 );
@@ -160,21 +160,51 @@ const logoutUser = asyncHandler(
 // update refreshAccessToken 
 const refreshAccessToken = asyncHandler(
     async (req, res) => {
-        incomingAccessToken = req.cookies.accessToken || req.body.accessToken;
+        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
-        if (!incomingAccessToken) {
-            throw new ApiError(403, "Unauthorized Request")
+        // checking incoming refresh token
+        try {
+            if (!incomingRefreshToken) {
+                throw new ApiError(403, "Unauthorized Request")
+            }
+
+            // decoding incoming refresh token with jwt
+            const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+            if (!decodedToken) {
+                throw new ApiError(401, "Invalid request")
+            }
+
+            // finding user form db
+            const user = await User.findById(decodedToken._id)
+
+            // whether user exists or not
+            if (!user) {
+                throw new ApiError(401, "Invalid refresh token")
+            }
+
+            // validating incoming refresh token with saved one from db
+            if (user.refreshToken !== incomingRefreshToken) {
+                throw new ApiError(401, "Refresh Token is expired or used")
+            }
+
+            // Generate a new access token
+            const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user?._id)
+
+            // sending response 
+            res
+                .status(200)
+                .cookie("refreshToken", newRefreshToken, options)
+                .cookie("accessToken", accessToken, options)
+                .json(
+                    new ApiResponse(200,
+                        { accessToken, "refreshToken": newRefreshToken },
+                        "Access token has been refreshed successfully"
+                    )
+                )
+        } catch (error) {
+            throw new ApiError(401, error?.nessage || "Invalid refresh token ")
         }
-
-        const decodedAccessToken = jwt.verify(incomingAccessToken, process.env.ACCESS_TOKEN_SECRET)
-
-        const user = await User.findById(decodedAccessToken._id)
-
-        if (!user) {
-            throw new ApiError(401, "Invalid refresh token")
-        }
-
-
     }
 )
 
@@ -184,7 +214,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 // Controller to edit profile
-const changeCurrentUserProfile = asyncHandler(
+const updateAccountDetail = asyncHandler(
 
     // validate input {name and email}
     // find user
@@ -279,6 +309,8 @@ export {
     registerUser,
     loginUser,
     logoutUser,
-    changeCurrentUserProfile,
+    refreshAccessToken,
+    updateAccountDetail,
     changeCurrentUserPassword,
+    getCurrentUser
 }

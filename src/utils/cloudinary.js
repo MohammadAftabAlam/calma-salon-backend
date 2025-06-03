@@ -9,7 +9,7 @@ cloudinary.config({
 });
 
 // Method to upload images
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (folder, localFilePath) => {
     try {
 
         // file has local path or not
@@ -22,7 +22,7 @@ const uploadOnCloudinary = async (localFilePath) => {
             .upload(
                 localFilePath,
                 {
-                    folder: 'static-services',
+                    folder: folder,
                     resource_type: "auto",
                     use_filename: true
                 },

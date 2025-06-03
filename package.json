@@ -27,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.16.0",
     "mongoose": "^8.15.0",
+    "mongoose-aggregate-paginate-v2": "^1.1.4",
     "multer": "^2.0.0"
   },
   "devDependencies": {

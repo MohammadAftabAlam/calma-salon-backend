@@ -32,11 +32,11 @@ const uploadStaticServicesImage = asyncHandler(
         }
 
         // Uploading image on cloudinary
-        const serviceImageUrl = await uploadOnCloudinary(serviceImageLocalFilePath);
+        const serviceImageUrl = await uploadOnCloudinary('static-services',serviceImageLocalFilePath);
 
         // Validating image uploaded on cloudinary or not
         if (!serviceImageUrl) {
-            throw new ApiError(500, "Something went wrong uploading images on cloud");
+            throw new ApiError(500, "Something went wrong uploading service image");
         }
 
         // Pushing data into db

@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/user.routes.js';
 import staticImagesRouter from './routes/staticImages.routes.js'
+import salonRouter from './routes/salon.routes.js';
 
 const app = express();
 
@@ -35,5 +36,7 @@ app.use(express.urlencoded({ extended: true, limit: "10kb"}))
 app.use("/api/v1/user", userRouter)
 app.use("/api/v1/staticServices", staticImagesRouter)
 
+// salon api link
+app.use("/api/v1/salon", salonRouter)
 
 export default app

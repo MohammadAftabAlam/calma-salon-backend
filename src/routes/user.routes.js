@@ -3,7 +3,7 @@ import { Router } from "express";
 import { verifyUserWithJWT } from "../middlewares/auth.middleware.js";
 import { uploadStaticServicesImage, getAllStaticMenServices, getAllStaticWomenServices } from "../controllers/uploadImages.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { registerUser, loginUser, logoutUser, changeCurrentUserProfile, changeCurrentUserPassword } from "../controllers/user.controller.js";
+import { registerUser, loginUser, logoutUser, refreshAccessToken, updateAccountDetail, changeCurrentUserPassword } from "../controllers/user.controller.js";
 
 const router = Router();
 
@@ -21,7 +21,7 @@ router.route("/login").post(loginUser);
 router.route("/logout").post(verifyUserWithJWT, logoutUser);
 
 //edit profile route
-router.route("/edit-profile").post(verifyUserWithJWT, changeCurrentUserProfile);
+router.route("/edit-profile").post(verifyUserWithJWT, updateAccountDetail);
 
 //change password route
 router.route("/change-password").post(verifyUserWithJWT, changeCurrentUserPassword);
@@ -37,9 +37,12 @@ router.route("/addServices").post(
     uploadStaticServicesImage
 );
 
+// refresh token route
+router.route("/refresh-token").post(verifyUserWithJWT, refreshAccessToken);
+
 // get all men static services
-router.route("/getMenServices").get(getAllStaticMenServices);
+// router.route("/getMenServices").get(getAllStaticMenServices);
 
 // get all women static services
-router.route("/getWoenServices").get(getAllStaticWomenServices);
+// router.route("/getWoenServices").get(getAllStaticWomenServices);
 export default router
