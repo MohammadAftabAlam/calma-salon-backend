@@ -1,8 +1,11 @@
-import Salon from "../models/salon.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+
+import { salonDb } from "../db/server.js";
+import salonModel from "../models/salon.models.js";
+const Salon = salonModel(salonDb)
 
 const registerSalon = asyncHandler(
     // find req from body

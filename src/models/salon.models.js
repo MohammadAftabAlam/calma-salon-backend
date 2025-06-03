@@ -132,6 +132,8 @@ salonSchema.methods.generateRefreshToken = function () {
 
 salonSchema.index({ 'location': '2dsphere' })
 salonSchema.plugin(mongooseAggregatePaginate);
-const Salon = new mongoose.model("Salon", salonSchema);
 
-export default Salon;
+// const Salon = new mongoose.model("Salon", salonSchema);
+// export default Salon;
+
+export default (db) = db.model('Salon', salonSchema);

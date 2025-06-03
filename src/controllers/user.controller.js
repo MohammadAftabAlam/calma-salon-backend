@@ -1,12 +1,15 @@
 import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 
-import User from "../models/user.models.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import options from "../utils/cookie_opt.js";
 
+import { userDb } from "../db/server.js";
+import userModel from "../models/user.models.js"
+
+const User = userModel(userDb)
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
