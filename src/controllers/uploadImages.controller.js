@@ -16,7 +16,7 @@ const uploadStaticServicesImage = asyncHandler(
         }
 
         // Validating service name and category
-        if ([serviceName, category].some((field) => { field.trim() === "" })) {
+        if ([serviceName, category].some((field) => { field?.trim() === "" })) {
             throw new ApiError(400, "Service name and category is required");
         }
 

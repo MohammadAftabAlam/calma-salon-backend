@@ -89,8 +89,8 @@ userSchema.methods.generateAccessToken = function () {
 }
 
 // creating model of the collection
-// const User = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
 
 // Exporting model User
-// export default User
-export default (db) = db.model('User', userSchema);
+export default User
+// export default (db) => db.model("User", userSchema);

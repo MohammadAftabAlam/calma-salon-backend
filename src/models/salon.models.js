@@ -59,16 +59,16 @@ const salonSchema = new mongoose.Schema(
         },
 
         yearOfExperience: {
-            type: Number,
+            type: String,
             required: true,
         },
         openingTime: {
-            type: Date,
+            type: String,
             required: true,
 
         },
         closingTime: {
-            type: Date,
+            type: String,
             required: true,
         },
         password: {
@@ -81,8 +81,8 @@ const salonSchema = new mongoose.Schema(
         },
 
         rating: {
-            type: Number,
-            default: 0,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "SalonRating",
             min: 1,
             max: 5,
         },
@@ -102,7 +102,7 @@ salonSchema.pre("save", async function (next) {
     next();
 })
 
-salonSchema.methods.isPasswordCorrect = async (password) => {
+salonSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
@@ -122,7 +122,7 @@ salonSchema.methods.generateRefreshToken = function () {
     return jwt.sign({
         _id: this._id
     },
-        process.env.REFRESH_TOKEN_SECRETF,
+        process.env.REFRESH_TOKEN_SECRET,
         {
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY
         }
@@ -131,9 +131,11 @@ salonSchema.methods.generateRefreshToken = function () {
 }
 
 salonSchema.index({ 'location': '2dsphere' })
+
+// it returns paginated results for aggregate queries
 salonSchema.plugin(mongooseAggregatePaginate);
 
-// const Salon = new mongoose.model("Salon", salonSchema);
-// export default Salon;
+const Salon = mongoose.model("Salon", salonSchema);
+export default Salon;
 
-export default (db) = db.model('Salon', salonSchema);
+// export default (db) => db.model('Salon', salonSchema);

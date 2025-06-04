@@ -14,7 +14,7 @@ const salonRatingSchmea = mongoose.Schema({
     ratedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
+        required: true
     }
 });
 

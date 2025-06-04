@@ -32,13 +32,17 @@ const uploadOnCloudinary = async (folder, localFilePath) => {
 
         // Checking whether image uploaded on cloudinary 
         if (!response) {
-            throw new Error("File not uploaded")
+            throw new Error("File not uploaded on cloud")
         }
 
+        // unlinking the local file
         fs.unlinkSync(localFilePath);
+        
         // returning response
         return response
+
     } catch (error) {
+        // If any error occurs, log the error and unlink the local file
         fs.unlinkSync(localFilePath);
         console.log(error.message)
     }
