@@ -1,3 +1,5 @@
+import jwt from "jsonwebtoken";
+
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -159,13 +161,187 @@ const loginSalon = asyncHandler(
     }
 );
 
+// Controller to get salon details
+const getCurrentSalon = asyncHandler(async (req, res) => {
+    return res.status(200).json(new ApiResponse(200, req.salon, "Current User fetched successfully"));
+});
+
 // Controller to logout a salon
 const logoutSalon = asyncHandler(
     async (req, res) => {
 
+        //finding salon by id and updating refreshToken to null
+        const salon = Salon.findByIdAndUpdate(
+            req?._id,
+            {
+                $set: {
+                    refreshToken: null
+                },
+            },
+            {
+                new: true,
+            }
+        ).select("-password -refreshToken");
+
+        // sending response
+        res
+            .status(200)
+            .clearCookie("refreshToken", salon?.refreshToken, options)
+            .clearCookie("accessToken", salon?.accessToken, options)
+            .json(
+                new ApiResponse(200, "Salon logged out successfully")
+            );
     }
 );
+
+// Controller to refresh access token
+const refreshAccessToken = asyncHandler(
+    async (req, res) => {
+        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+        try {
+            // checking incoming refresh token
+            if (!incomingRefreshToken) {
+                throw new ApiError(403, "Unauthorized Request")
+            }
+
+            // decoding incoming refresh token with jwt.verify
+            const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+            if (!decodedToken) {
+                throw new ApiError(401, "Invalid request")
+            }
+
+            // finding salon form db
+            const salon = await Salon.findById(decodedToken._id)
+
+            // whether user exists or not
+            if (!salon) {
+                throw new ApiError(401, "Invalid refresh token")
+            }
+
+            // validating incoming refresh token with saved one from db
+            if (salon.refreshToken !== incomingRefreshToken) {
+                throw new ApiError(401, "Refresh Token is expired or used")
+            }
+
+            // Generate a new access token
+            const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user?._id)
+
+            // sending response 
+            res
+                .status(200)
+                .cookie("refreshToken", newRefreshToken, options)
+                .cookie("accessToken", accessToken, options)
+                .json(
+                    new ApiResponse(200,
+                        { accessToken, "refreshToken": newRefreshToken },
+                        "Access token has been refreshed successfully"
+                    )
+                )
+        } catch (error) {
+            throw new ApiError(401, error?.nessage || "Invalid refresh token ")
+        }
+    }
+);
+
+
+// Controller to edit profile
+const updateAccountDetail = asyncHandler(
+
+    // validate input {salonName and email}
+    // find salon
+    // Update the fields 
+    // return response 
+
+    async (req, res) => {
+        const { salonName, email } = req.body;
+
+        // Check for empty fields
+        if ([salonName, email].some((field) => { field.trim() === "" })) {
+            throw new ApiError(401, "All fields are required");
+        }
+
+        // Check if email is already used by another user 
+        const isEmailExist = await User.findOne({
+            _id: {
+                $ne: req.user._id  // Exclude current user
+            },
+            email
+        })
+        if (isEmailExist) {
+            throw new ApiError(401, "Email already exist, use another one")
+        }
+
+        // Updating existing name and password
+        const updatedSalon = await Salon.findByIdAndUpdate(
+            req.salon?._id,
+            {
+                $set: { salonName, email }
+            },
+            {
+                new: true
+            }
+        ).select("-password -refreshToken")
+
+        // sending response to the user
+        res
+            .status(200)
+            .json(
+                new ApiResponse(200,
+                    { user: updatedUser },
+                    "Fields are updated Successfully"),
+            )
+    }
+);
+
+// Controllers to change password
+const changeCurrentUserPassword = asyncHandler(
+    async (req, res) => {
+        const { currrentPassword, newPassword, confirmNewPassword } = req.body;
+
+        const isCurrentPasswordCorrect = await req.salon.isPasswordCorrect(currrentPassword);
+
+        if (!isCurrentPasswordCorrect) {
+            throw new ApiError(401, "Invalid password");
+        }
+
+        // Checking whether both newpassword and confirmNewPassword is similiar
+        if (!(newPassword === confirmNewPassword)) {
+            throw new ApiError(401, "password doesn't matched");
+        }
+
+        // Hashed password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        //Save new password and remove password from response
+        const salon = await Salon.findByIdAndUpdate(
+            req.salon?._id,
+            { $set: { password: hashedPassword } },
+            { new: true }
+        ).select("-password -refreshToken");
+
+        // Check whether update operation performed
+        if (!salon) {
+            throw new ApiError(500, "Something went wrong while updating password")
+        }
+
+        // sending response 
+        res
+            .status(200)
+            .json(new ApiResponse(200,
+                { salon: salon },
+                "Password updated successfully")
+            )
+    }
+);
+
 export {
     registerSalon,
     loginSalon,
+    logoutSalon,
+    getCurrentSalon,
+    refreshAccessToken,
+    updateAccountDetail,
+    changeCurrentUserPassword,
 }
