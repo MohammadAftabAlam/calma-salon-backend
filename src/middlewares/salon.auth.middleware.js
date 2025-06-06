@@ -16,6 +16,8 @@ const verifySalonWithJwt = asyncHandler(
             // decoding incoming token
             const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
+            console.log(`Decoded Token: ${decodedToken.tokenType}`);
+
             // Checking whether token is verified or not
             if (!decodedToken || decodedToken.tokenType !== "access") {
                 throw new ApiError(401, "Invalid token");
@@ -26,7 +28,7 @@ const verifySalonWithJwt = asyncHandler(
 
             // If salon not present
             if (!salon) {
-                throw new ApiError(401, "Invalid access token")
+                throw new ApiError(401, "Invalid token or being used")
             }
 
             // Populating salon inside req

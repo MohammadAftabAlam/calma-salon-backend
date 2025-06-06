@@ -5,11 +5,11 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import options from "../utils/cookie_opt.js";
-
-// import  from "../db/server.js";
 import User from "../models/user.models.js";
 
+// import  from "../db/server.js";
 // const User = userModel(userDb);
+
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {

@@ -63,12 +63,12 @@ const salonSchema = new mongoose.Schema(
             required: true,
         },
         openingTime: {
-            type: String,
+            type: Date,
             required: true,
 
         },
         closingTime: {
-            type: String,
+            type: Date,
             required: true,
         },
         password: {
@@ -96,19 +96,22 @@ const salonSchema = new mongoose.Schema(
 
 
 salonSchema.pre("save", async function (next) {
-    if (this.isModified) {
-        this.password = await bcrypt.hash(this.password, 10)
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+        next();
     }
     next();
 })
 
-salonSchema.methods.isPasswordCorrect = async function (password) {
+salonSchema.methods.isSalonPasswordCorrect = async function (password) {
+    console.log(`from salonModel.js Password: ${this.password}`);
     return await bcrypt.compare(password, this.password)
 }
 
 salonSchema.methods.generateAccessToken = function () {
     return jwt.sign({
-        _id: this._id
+        _id: this._id,
+        tokenType: "access",
     },
         process.env.ACCESS_TOKEN_SECRET,
         {
@@ -120,7 +123,8 @@ salonSchema.methods.generateAccessToken = function () {
 
 salonSchema.methods.generateRefreshToken = function () {
     return jwt.sign({
-        _id: this._id
+        _id: this._id,
+        tokenType: "refresh",
     },
         process.env.REFRESH_TOKEN_SECRET,
         {
