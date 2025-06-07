@@ -26,8 +26,6 @@ const uploadOnCloudinary = async (folder, localFilePath) => {
                     resource_type: "auto",
                     use_filename: true
                 },
-
-                function (res) { console.log(res); },
             );
 
         // Checking whether image uploaded on cloudinary 
@@ -37,7 +35,7 @@ const uploadOnCloudinary = async (folder, localFilePath) => {
 
         // unlinking the local file
         fs.unlinkSync(localFilePath);
-        
+
         // returning response
         return response
 
