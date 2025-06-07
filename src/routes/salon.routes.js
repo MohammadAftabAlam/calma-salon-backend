@@ -8,6 +8,7 @@ import {
     getCurrentSalon,
     refreshAccessToken,
     updateAccountDetail,
+    changeSalonCoverImage,
     changeCurrentUserPassword,
 } from '../controllers/salon.controller.js';
 
@@ -27,20 +28,31 @@ router.route('/register-salon').post(
 // rotuer to login salon
 router.route('/login').post(loginSalon);
 
-//route to logout salon
-router.route('/logout').post(verifySalonWithJwt, logoutSalon)
+// route to update access token
+router.route('/update-token').get(refreshAccessToken);
 
 // route to get salon profile
-router.route('/salon-profile').get(verifySalonWithJwt, getCurrentSalon)
+router.route('/profile').get(verifySalonWithJwt, getCurrentSalon);
 
-// route to update salon profile
+// route to update salon profile    
 router.route('/update-profile').put(verifySalonWithJwt, updateAccountDetail);
 
-// route to update access token
-router.route('/update-access-token').get(verifySalonWithJwt, refreshAccessToken);
+// route to update salon cover image
+router.route('/update-coverImage').put(
+    verifySalonWithJwt,
+    upload.fields([
+        {
+            name: "salonCoverImage",
+            maxCount: 1
+        }
+    ]),
+    changeSalonCoverImage
+);
 
 //route to update passwors
 router.route('/update-password').put(verifySalonWithJwt, changeCurrentUserPassword);
 
+//route to logout salon
+router.route('/logout').post(verifySalonWithJwt, logoutSalon);
 
 export default router

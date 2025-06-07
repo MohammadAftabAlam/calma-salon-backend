@@ -8,9 +8,10 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import Salon from "../models/salon.models.js";
 import options from "../utils/cookie_opt.js";
 
-const generateAccessAndRefreshToken = async (userId) => {
+// Function to generate access and refresh token
+const generateAccessAndRefreshToken = async (salonId) => {
     try {
-        const salon = await Salon.findById(userId);
+        const salon = await Salon.findById(salonId);
         const refreshToken = salon.generateRefreshToken();
         const accessToken = salon.generateAccessToken();
 
@@ -26,11 +27,21 @@ const generateAccessAndRefreshToken = async (userId) => {
     }
 }
 
+// Function to convert time string (HH:mm) to Date object
+const convertTimeStringToDate = (timeString) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date("1970-01-01");
+    date.setHours(hours, minutes, 0, 0).toLocaleString();
+    return date;
+};
+
 // Controller to register a salon
 const registerSalon = asyncHandler(
     // find req from body
     // destructure req.body
-    // validate the details
+    // find whether salon with same phoneNumber or salonName already exists or not
+    // if exists then throw error
+    // Now, validate the details
     // create a new salon
     // save the salon to the database
     // remove password and refreshToken from response
@@ -44,6 +55,19 @@ const registerSalon = asyncHandler(
         if ([salonName, phoneNumber, email, description, yearOfExperience, openingTime, closingTime, password].some((field) => { return field?.trim() === "" })) {
             throw new ApiError(400, "All fields are required");
         }
+
+        // Checking whether salon with same phoneNumber or salonName already exists or not
+        const isSalonExist = await Salon.findOne({
+            $or: [
+                { phoneNumber, salonName, email }
+            ]
+        });
+
+        // If salon exists then throw error
+        if (isSalonExist) {
+            throw new ApiError(400, "Salon with same phone number or salon name already exists");
+        }
+
         // validating email
         if (!email.includes('@')) {
             throw new ApiError(400, "please enter a valid email")
@@ -53,14 +77,23 @@ const registerSalon = asyncHandler(
         const parsedLocation = JSON.parse(location);
         const parsedServices = JSON.parse(services);
 
+        // parsing opening and closing time into date
+        const parsedOpeningTime = convertTimeStringToDate(openingTime)
+        const parsedClosingTime = convertTimeStringToDate(closingTime)
+
         // validating location
         if (!parsedLocation || parsedLocation.type !== 'Point' || !Array.isArray(parsedLocation.coordinates) || parsedLocation.coordinates.length !== 2) {
             throw new ApiError(400, "Please provide a valid location in GeoJSON format");
         }
 
         // validating services
-        if (!parsedLocation || (!Array.isArray(parsedServices) && parsedServices.length === 0)) {
+        if (!parsedServices || (!Array.isArray(parsedServices) && parsedServices.length === 0)) {
             throw new ApiError(400, "Atleast one service is required");
+        }
+
+        // validating year of parsed opening and closing time
+        if (isNaN(parsedOpeningTime.getTime()) || isNaN(parsedClosingTime.getTime())) {
+            throw new ApiError(400, "Invalid time format. Use HH:mm.");
         }
 
         let salonImageLocalPath;
@@ -92,8 +125,8 @@ const registerSalon = asyncHandler(
             description,
             location: parsedLocation,
             yearOfExperience,
-            openingTime,
-            closingTime,
+            openingTime: parsedOpeningTime,
+            closingTime: parsedClosingTime,
             password,
             salonImage: salonImageCloudinary.url,
         })
@@ -136,11 +169,11 @@ const loginSalon = asyncHandler(
         }
 
         // checking password is correct or not
-        const isPasswordValid = await salon.isPasswordCorrect(password);
+        const isPasswordValid = await salon.isSalonPasswordCorrect(password);
 
         // validating password is correct or not
         if (!isPasswordValid) {
-            throw new ApiError(401, "Invalid credentials");
+            throw new ApiError(401, "Invalid phone number or password");
         }
 
         // generating refresh & access token
@@ -171,7 +204,7 @@ const logoutSalon = asyncHandler(
     async (req, res) => {
 
         //finding salon by id and updating refreshToken to null
-        const salon = Salon.findByIdAndUpdate(
+        const salon = await Salon.findByIdAndUpdate(
             req?._id,
             {
                 $set: {
@@ -182,6 +215,8 @@ const logoutSalon = asyncHandler(
                 new: true,
             }
         ).select("-password -refreshToken");
+
+        // console.log(`refresh Token : ${salon.refreshToken}`);
 
         // sending response
         res
@@ -197,7 +232,7 @@ const logoutSalon = asyncHandler(
 // Controller to refresh access token
 const refreshAccessToken = asyncHandler(
     async (req, res) => {
-        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+        const incomingRefreshToken = req.cookies.refreshToken || req.header("Authorization")?.replace("Bearer ", "");
 
         try {
             // checking incoming refresh token
@@ -209,24 +244,24 @@ const refreshAccessToken = asyncHandler(
             const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
             if (!decodedToken) {
-                throw new ApiError(401, "Invalid request")
+                throw new ApiError(401, "Invalid token");
             }
 
             // finding salon form db
-            const salon = await Salon.findById(decodedToken._id)
+            const salon = await Salon.findById(decodedToken?._id);
 
             // whether user exists or not
             if (!salon) {
-                throw new ApiError(401, "Invalid refresh token")
+                throw new ApiError(401, "Invalid request, salon not found");
             }
 
             // validating incoming refresh token with saved one from db
             if (salon.refreshToken !== incomingRefreshToken) {
-                throw new ApiError(401, "Refresh Token is expired or used")
+                throw new ApiError(401, "Refresh Token is expired or used");
             }
 
             // Generate a new access token
-            const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user?._id)
+            const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(salon?._id);
 
             // sending response 
             res
@@ -238,13 +273,12 @@ const refreshAccessToken = asyncHandler(
                         { accessToken, "refreshToken": newRefreshToken },
                         "Access token has been refreshed successfully"
                     )
-                )
+                );
         } catch (error) {
             throw new ApiError(401, error?.nessage || "Invalid refresh token ")
         }
     }
 );
-
 
 // Controller to edit profile
 const updateAccountDetail = asyncHandler(
@@ -263,12 +297,14 @@ const updateAccountDetail = asyncHandler(
         }
 
         // Check if email is already used by another user 
-        const isEmailExist = await User.findOne({
+        const isEmailExist = await Salon.findOne({
             _id: {
-                $ne: req.user._id  // Exclude current user
+                $ne: req.salon._id  // Exclude current user
             },
             email
-        })
+        });
+
+        // If email already exists, throw error
         if (isEmailExist) {
             throw new ApiError(401, "Email already exist, use another one")
         }
@@ -282,14 +318,14 @@ const updateAccountDetail = asyncHandler(
             {
                 new: true
             }
-        ).select("-password -refreshToken")
+        ).select("-password -refreshToken -location -services -yearOfExperience -openingTime -closingTime -description -salonImage");
 
         // sending response to the user
         res
             .status(200)
             .json(
                 new ApiResponse(200,
-                    { user: updatedUser },
+                    { salon: updatedSalon },
                     "Fields are updated Successfully"),
             )
     }
@@ -298,31 +334,33 @@ const updateAccountDetail = asyncHandler(
 // Controllers to change password
 const changeCurrentUserPassword = asyncHandler(
     async (req, res) => {
-        const { currrentPassword, newPassword, confirmNewPassword } = req.body;
+        const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
-        const isCurrentPasswordCorrect = await req.salon.isPasswordCorrect(currrentPassword);
+        // Validating incoming password
+        const isCurrentPasswordCorrect = await req.salon.isSalonPasswordCorrect(currentPassword);
 
+        // If current password is not correct then throw error
         if (!isCurrentPasswordCorrect) {
             throw new ApiError(401, "Invalid password");
         }
 
         // Checking whether both newpassword and confirmNewPassword is similiar
         if (!(newPassword === confirmNewPassword)) {
-            throw new ApiError(401, "password doesn't matched");
+            throw new ApiError(401, "password doesn't match");
         }
 
-        // Hashed password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        // Hashing new password
+        const hashedPassword = await bcrypt.hash(confirmNewPassword, 10);
 
-        //Save new password and remove password from response
-        const salon = await Salon.findByIdAndUpdate(
+        //Save new password and remove unnecessary details
+        const updatedSalon = await Salon.findByIdAndUpdate(
             req.salon?._id,
             { $set: { password: hashedPassword } },
             { new: true }
-        ).select("-password -refreshToken");
+        ).select("-password -refreshToken -location -services -yearOfExperience -openingTime -closingTime -description -salonImage");
 
         // Check whether update operation performed
-        if (!salon) {
+        if (!updatedSalon) {
             throw new ApiError(500, "Something went wrong while updating password")
         }
 
@@ -330,12 +368,65 @@ const changeCurrentUserPassword = asyncHandler(
         res
             .status(200)
             .json(new ApiResponse(200,
-                { salon: salon },
+                { salon: updatedSalon },
                 "Password updated successfully")
             )
     }
 );
 
+// Controller to change salon image
+const changeSalonCoverImage = asyncHandler(
+    async (req, res) => {
+
+        const { salonCoverImage } = req.body;
+
+        let salonCoverImageLocalPath;
+
+        // Validating upcoming image
+        if ((req.files && Array.isArray(req.files.salonCoverImage)) && req.files.salonCoverImage.length > 0) {
+            salonCoverImageLocalPath = req.files.salonCoverImage[0].path;
+        }
+
+        // Validating local path
+        if (!salonCoverImageLocalPath) {
+            throw new ApiError(400, "Cover image file is missing");
+        }
+
+        // Cover Image is uploading on cloudinary
+        const salonCoverImageCloudinary = await uploadOnCloudinary("salon", salonCoverImageLocalPath);
+
+        // If image not uploaded on cloudinary throw err
+        if (!salonCoverImageCloudinary) {
+            throw new ApiError(400, "Error while uploading the cover image");
+        }
+
+        // console.log(`Updated salon cloudinary image url: ${salonCoverImageCloudinary.url}`)
+        // console.log(`req.salon.?._id: ${req.salon?._id}`)
+
+        // Commiting changes inside db
+        const updatedSalon = await Salon.findByIdAndUpdate(
+            req.salon?._id,
+            {
+                $set: { salonImage: salonCoverImageCloudinary.url }
+            },
+            { new: true }
+        ).select("-password -refreshToken -location -services -yearOfExperience -openingTime -closingTime -description");
+
+        // validating whether db update is successfull or not
+        if (!updatedSalon) {
+            throw new ApiError(500, "Something went wrong while updating db");
+        }
+
+        // return response
+        res
+            .status(200)
+            .json(
+                new ApiResponse(200, updatedSalon, "Cover image updated successfully")
+            )
+    }
+);
+
+// Exporting all controllers
 export {
     registerSalon,
     loginSalon,
@@ -343,5 +434,6 @@ export {
     getCurrentSalon,
     refreshAccessToken,
     updateAccountDetail,
+    changeSalonCoverImage,
     changeCurrentUserPassword,
 }

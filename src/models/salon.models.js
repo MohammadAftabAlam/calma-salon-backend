@@ -104,15 +104,15 @@ salonSchema.pre("save", async function (next) {
 })
 
 salonSchema.methods.isSalonPasswordCorrect = async function (password) {
-    console.log(`from salonModel.js Password: ${this.password}`);
     return await bcrypt.compare(password, this.password)
 }
 
 salonSchema.methods.generateAccessToken = function () {
-    return jwt.sign({
-        _id: this._id,
-        tokenType: "access",
-    },
+    return jwt.sign(
+        {
+            _id: this._id,
+            tokenType: "access",
+        },
         process.env.ACCESS_TOKEN_SECRET,
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY
@@ -122,10 +122,11 @@ salonSchema.methods.generateAccessToken = function () {
 }
 
 salonSchema.methods.generateRefreshToken = function () {
-    return jwt.sign({
-        _id: this._id,
-        tokenType: "refresh",
-    },
+    return jwt.sign(
+        {
+            _id: this._id,
+            tokenType: "refresh",
+        },
         process.env.REFRESH_TOKEN_SECRET,
         {
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY
