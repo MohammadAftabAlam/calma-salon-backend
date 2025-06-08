@@ -23,20 +23,8 @@ const salonSchema = new mongoose.Schema(
             unique: true,
         },
         services: {
-            type: [
-                {
-                    serviceName: {
-                        type: String,
-                        required: true,
-                        trim: true,
-                    },
-                    servicePrice: {
-                        type: Number,
-                        required: true,
-                        default: 0
-                    }
-                }
-            ],
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "Service",
         },
         salonImage: {
             type: String,     // cloudinary image url

@@ -1,4 +1,4 @@
-import Services from "../models/service.models.js";
+import StaticServices from "../models/staticServices.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js"
@@ -40,7 +40,7 @@ const uploadStaticServicesImage = asyncHandler(
         }
 
         // Pushing data into db
-        const servicesCreated = await Services.create({
+        const servicesCreated = await StaticServices.create({
             serviceImageUrl: serviceImageUrl.url,
             serviceName,
             category,
@@ -63,7 +63,7 @@ const uploadStaticServicesImage = asyncHandler(
 const getAllStaticMenServices = asyncHandler(
     async (req, res) => {
         // getting men static services from db
-        const menStaticServices = await Services.find({ category: { $eq: "men" } });
+        const menStaticServices = await StaticServices.find({ category: { $eq: "men" } });
 
         // checking
         if (!menStaticServices) {
@@ -84,7 +84,7 @@ const getAllStaticWomenServices = asyncHandler(
     async (req, res) => {
 
         // getting men static services from db
-        const womenStaticServices = await Services.find({ category: { $eq: "women" } });
+        const womenStaticServices = await StaticServices.find({ category: { $eq: "women" } });
 
         if (!womenStaticServices) {
             throw new ApiError(404, "Something went wrong while fetching services from db");

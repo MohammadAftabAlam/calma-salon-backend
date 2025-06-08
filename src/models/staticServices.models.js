@@ -1,6 +1,6 @@
 import mongoose, { mongo } from "mongoose";
 
-const serviceSchema = new mongoose.Schema(
+const staticServiceSchema = new mongoose.Schema(
     {
         serviceImageUrl: {
             type: String,
@@ -27,6 +27,6 @@ const serviceSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const Services = mongoose.model("Services", serviceSchema)
+const StaticServices = mongoose.model("StaticServices", staticServiceSchema)
 
-export default Services
+export default StaticServices

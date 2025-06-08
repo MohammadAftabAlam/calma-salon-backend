@@ -75,7 +75,7 @@ const registerSalon = asyncHandler(
 
         // parsing location and services into JSON
         const parsedLocation = JSON.parse(location);
-        const parsedServices = JSON.parse(services);
+        // const parsedServices = JSON.parse(services);
 
         // parsing opening and closing time into date
         const parsedOpeningTime = convertTimeStringToDate(openingTime)
@@ -87,9 +87,9 @@ const registerSalon = asyncHandler(
         }
 
         // validating services
-        if (!parsedServices || (!Array.isArray(parsedServices) && parsedServices.length === 0)) {
-            throw new ApiError(400, "Atleast one service is required");
-        }
+        // if (!parsedServices || (!Array.isArray(parsedServices) && parsedServices.length === 0)) {
+        //     throw new ApiError(400, "Atleast one service is required");
+        // }
 
         // validating year of parsed opening and closing time
         if (isNaN(parsedOpeningTime.getTime()) || isNaN(parsedClosingTime.getTime())) {
@@ -121,7 +121,7 @@ const registerSalon = asyncHandler(
             salonName,
             phoneNumber,
             email,
-            services: parsedServices,
+            // services: parsedServices,
             description,
             location: parsedLocation,
             yearOfExperience,
@@ -426,6 +426,27 @@ const changeSalonCoverImage = asyncHandler(
     }
 );
 
+// Controller to delete salon account
+const deleteSalonAccount = asyncHandler(
+    async (req, res) => {
+        // find salon from dd
+        // delete the salon from db
+        // return response
+
+        await Salon.findByIdAndDelete(
+            req.salon._id,
+        );
+
+        const deletedAccount = Salon.findOne(req.salon._id);
+
+        if (!deletedAccount) {
+            throw new ApiError(500, "Salon not deleted")
+        }
+
+        return res.status(200).json(new ApiResponse(200, "Salon has deleted successfully"))
+    }
+)
+
 // Exporting all controllers
 export {
     registerSalon,
@@ -436,4 +457,5 @@ export {
     updateAccountDetail,
     changeSalonCoverImage,
     changeCurrentUserPassword,
+    deleteSalonAccount
 }

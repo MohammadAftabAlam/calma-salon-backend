@@ -3,8 +3,10 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/user.routes.js';
-import staticImagesRouter from './routes/staticImages.routes.js'
+import staticImagesRouter from './routes/staticServices.routes.js'
+
 import salonRouter from './routes/salon.routes.js';
+import salonServiceRouter from './routes/salonService.router.js'
 
 const app = express();
 
@@ -38,5 +40,6 @@ app.use("/api/v1/staticServices", staticImagesRouter)
 
 // salon api link
 app.use("/api/v1/salon", salonRouter)
+app.use("/api/v1/services", salonServiceRouter)
 
 export default app

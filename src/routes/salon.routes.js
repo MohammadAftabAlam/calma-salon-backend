@@ -10,6 +10,7 @@ import {
     updateAccountDetail,
     changeSalonCoverImage,
     changeCurrentUserPassword,
+    deleteSalonAccount,
 } from '../controllers/salon.controller.js';
 
 const router = Router();
@@ -54,5 +55,7 @@ router.route('/update-password').put(verifySalonWithJwt, changeCurrentUserPasswo
 
 //route to logout salon
 router.route('/logout').post(verifySalonWithJwt, logoutSalon);
+
+router.route('/delete-account').delete(verifySalonWithJwt, deleteSalonAccount);
 
 export default router
