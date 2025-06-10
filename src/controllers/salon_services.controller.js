@@ -1,10 +1,10 @@
 import Service from "../models/services.models.js";
-import Salon from "../models/salon.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js"
 
-const addService = asyncHandler(
+// Controller to create new service of a salon
+const createService = asyncHandler(
     async (req, res) => {
 
         //find salon from req
@@ -50,20 +50,20 @@ const addService = asyncHandler(
         }
 
 
-        // find salon and update services
-        const serviceUpdated = await Salon.findByIdAndUpdate(
-            salonId,
-            {
-                $push: {
-                    services: createService._id,
-                }
-            }
-        );
+        // // find salon and update services
+        // const serviceUpdated = await Salon.findByIdAndUpdate(
+        //     salonId,
+        //     {
+        //         $push: {
+        //             services: createService._id,
+        //         }
+        //     }
+        // );
 
-        // If services not updated
-        if (!serviceUpdated) {
-            throw new ApiError(400, "Service not updated inside salon");
-        }
+        // // If services not updated
+        // if (!serviceUpdated) {
+        //     throw new ApiError(400, "Service not updated inside salon");
+        // }
 
 
         // send response when both services are created and updated in salon
@@ -94,12 +94,62 @@ const getAllServices = asyncHandler(
     }
 );
 
+
+// Controllers to edit a service
+const updateService = asyncHandler(
+    async (req, res) => {
+        const { salonId, serviceId } = req.params;
+        const { name, price, duration, description, isActive, category } = req.body;
+
+        // finding service
+        const service = await Service.findOne({ _id: serviceId, salonId });
+
+        // Validating and updating service
+        if (name !== undefined) service.name = name;
+        if (price !== undefined) service.price = price;
+        if (duration !== undefined) service.duration = duration;
+        if (description !== undefined) service.description = description;
+        if (isActive !== undefined) service.isActive = isActive;
+        if (category !== undefined) service.category = category;
+
+
+        // saving updated data in db
+        const updatedService = await service.save();
+
+        // If updated service not updated inside db
+        if (!updatedService) {
+            throw new ApiError(500, "Something went wrong while updating service")
+        }
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, updatedService, "Service has updated successfully"));
+    }
+);
+
 // Controller to delete a service
+const deleteService = asyncHandler(
+    async (req, res) => {
+        const { salonId, serviceId } = req.params;
 
+        // find service from db using salonId
+        const deletedService = await Service.deleteOne({ _id: serviceId, salonId: salonId });
 
+        // If service not found or something error occured while deleting service from db
+        if (deletedService.deletedCount !== 1) {
+            throw new ApiError(400, `Service with ID ${serviceId} not found or doesn't belong to the salon`)
+        }
+        return res
+            .status(200)
+            .json(new ApiResponse(200, "Service has deleted successfully"))
+
+    }
+);
 
 
 export {
-    addService,
-    getAllServices
+    createService,
+    getAllServices,
+    updateService,
+    deleteService
 }

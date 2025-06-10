@@ -1,10 +1,24 @@
 import { Router } from 'express';
 
-import { addService, getAllServices } from '../controllers/salon_services.controller.js';
+import {
+    createService,
+    getAllServices,
+    updateService,
+    deleteService,
+} from '../controllers/salon_services.controller.js';
 
 const router = Router();
 
-router.route('/:salonId/addServices').post(addService)
-router.route('/:salonId/salon-services').get(getAllServices)
+// router to add service
+router.route('/:salonId/create-service').post(createService);
+
+// router to getallservices
+router.route('/:salonId/getAllServices').get(getAllServices);
+
+// router to edit a service 
+router.route('/:salonId/services/:serviceId/update-service').put(updateService);
+
+// router to delete services
+router.route('/:salonId/services/:serviceId/delete-service').delete(deleteService);
 
 export default router;
