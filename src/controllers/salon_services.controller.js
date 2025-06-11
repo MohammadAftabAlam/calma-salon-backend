@@ -1,3 +1,4 @@
+import Salon from "../models/salon.models.js";
 import Service from "../models/services.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -68,8 +69,8 @@ const createService = asyncHandler(
 
         // send response when both services are created and updated in salon
         return res
-            .status(200)
-            .json(new ApiResponse(200,
+            .status(201)
+            .json(new ApiResponse(201,
                 { createService },
                 "Service has created sucessfully")
             )
@@ -82,6 +83,12 @@ const getAllServices = asyncHandler(
     async (req, res) => {
         const { salonId } = req.params;
 
+        const isSalonExist = await Salon.findById({_id: salonId});
+
+        if(!isSalonExist){
+            throw new ApiError(404, "Salon not found")
+        }
+        
         // const services = await Salon.findById(salonId);
         const services = await Service.find({ salonId });
 
@@ -147,9 +154,28 @@ const deleteService = asyncHandler(
 );
 
 
+
+// Controller to delete all services related to a salon
+const deleteAllServices = async (salonId) => {
+    if (!salonId) {
+        throw new ApiError(400, "Salon ID is required");
+    }
+
+    await Service.deleteMany({ salonId });
+
+    const remainingServices = await Service.find({ salonId });
+
+    if (remainingServices.length !== 0) {
+        throw new ApiError(304, `Some services related to salon with ID: ${salonId} were not deleted`);
+    }
+
+    return true;
+};
+
 export {
     createService,
     getAllServices,
     updateService,
-    deleteService
+    deleteService,
+    deleteAllServices
 }
