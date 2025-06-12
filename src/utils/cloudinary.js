@@ -46,4 +46,45 @@ const uploadOnCloudinary = async (folder, localFilePath) => {
     }
 }
 
-export { uploadOnCloudinary }
+const deleteFromCloudinary = async (folder, imageUrl) => {
+    try {
+
+        if (!folder || !imageUrl) {
+            throw new Error("folder or imageUrl is required")
+        }
+
+        // Converting image url into array
+        const urlParts = imageUrl.split('/');
+
+        // getting filename with extension from array
+        const filenameWithExt = urlParts[urlParts.length - 1]
+
+        // Extracting filename from filenameWithExt
+        const filename = filenameWithExt.split('.')[0]
+
+        // Sending public_id to destroy image
+        const response = await cloudinary.uploader.destroy(
+            `${folder}/${filename}`,
+            {
+                resource_type: "image",
+                invalidate: true,
+            }
+        );
+
+        // Checking whether image is uploaded on cloudinary or not
+        // If not uploaded then throw error
+        if (response.result !== 'ok') {
+            throw new Error("File not deleted from cloud")
+        }
+
+        return response
+
+    } catch (error) {
+        console.log(error?.message)
+    }
+}
+
+export {
+    uploadOnCloudinary,
+    deleteFromCloudinary
+}
