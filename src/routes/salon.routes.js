@@ -8,8 +8,8 @@ import {
     getCurrentSalon,
     refreshAccessToken,
     updateAccountDetail,
-    changeSalonCoverImage,
-    changeCurrentUserPassword,
+    changeSalonAvatarImage,
+    changeCurrentSalonPassword,
     deleteSalonAccount,
 } from '../controllers/salon.controller.js';
 
@@ -43,15 +43,15 @@ router.route('/update-coverImage').put(
     verifySalonWithJwt,
     upload.fields([
         {
-            name: "salonCoverImage",
+            name: "salonAvatarImage",
             maxCount: 1
         }
     ]),
-    changeSalonCoverImage
+    changeSalonAvatarImage
 );
 
 //route to update passwors
-router.route('/update-password').put(verifySalonWithJwt, changeCurrentUserPassword);
+router.route('/update-password').put(verifySalonWithJwt, changeCurrentSalonPassword);
 
 //route to logout salon
 router.route('/logout').post(verifySalonWithJwt, logoutSalon);

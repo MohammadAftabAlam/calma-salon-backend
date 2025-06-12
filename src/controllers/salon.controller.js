@@ -3,7 +3,9 @@ import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteAllServices } from "./salon_services.controller.js";
+import { deleteAllSalonExpertFromSalon } from "./salon_expert.controller.js";
 
 import Salon from "../models/salon.models.js";
 import options from "../utils/cookie_opt.js";
@@ -141,10 +143,10 @@ const registerSalon = asyncHandler(
             throw new ApiError(500, "Something went wrong while registering salon")
         }
 
-        // sending response
+        // send response
         res
-            .status(200)
-            .json(new ApiResponse(200, { createdSalon }, "salon has registered successfully"));
+            .status(201)
+            .json(new ApiResponse(201, { createdSalon }, "salon has registered successfully"));
     }
 );
 
@@ -196,7 +198,21 @@ const loginSalon = asyncHandler(
 
 // Controller to get salon details
 const getCurrentSalon = asyncHandler(async (req, res) => {
-    return res.status(200).json(new ApiResponse(200, req.salon, "Current User fetched successfully"));
+    const salon = req.salon
+
+    // Converting salon instance to js Object
+    const salonProfile = salon.toObject(salon)
+
+    // deleting refreshToken from salonProfile
+    delete salonProfile.refreshToken
+
+    // deleting password from salonProfile
+    delete salonProfile.password
+
+    // send response
+    return res
+        .status(200)
+        .json(new ApiResponse(200, salonProfile, "Current salon fetched successfully"));
 });
 
 // Controller to logout a salon
@@ -320,7 +336,7 @@ const updateAccountDetail = asyncHandler(
             }
         ).select("-password -refreshToken -location -services -yearOfExperience -openingTime -closingTime -description -salonImage");
 
-        // sending response to the user
+        // sending response 
         res
             .status(200)
             .json(
@@ -332,8 +348,10 @@ const updateAccountDetail = asyncHandler(
 );
 
 // Controllers to change password
-const changeCurrentUserPassword = asyncHandler(
+const changeCurrentSalonPassword = asyncHandler(
     async (req, res) => {
+
+        // Destructuring body
         const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
         // Validating incoming password
@@ -375,39 +393,37 @@ const changeCurrentUserPassword = asyncHandler(
 );
 
 // Controller to change salon image
-const changeSalonCoverImage = asyncHandler(
+const changeSalonAvatarImage = asyncHandler(
     async (req, res) => {
 
-        const { salonCoverImage } = req.body;
-
-        let salonCoverImageLocalPath;
+        let salonAvatarImageLocalPath;
 
         // Validating upcoming image
-        if ((req.files && Array.isArray(req.files.salonCoverImage)) && req.files.salonCoverImage.length > 0) {
-            salonCoverImageLocalPath = req.files.salonCoverImage[0].path;
+        if ((req.files && Array.isArray(req.files.salonAvatarImage)) && req.files.salonAvatarImage.length > 0) {
+            salonAvatarImageLocalPath = req.files.salonAvatarImage[0].path;
         }
 
         // Validating local path
-        if (!salonCoverImageLocalPath) {
+        if (!salonAvatarImageLocalPath) {
             throw new ApiError(400, "Cover image file is missing");
         }
 
         // Cover Image is uploading on cloudinary
-        const salonCoverImageCloudinary = await uploadOnCloudinary("salon", salonCoverImageLocalPath);
+        const salonAvatarImageCloudinary = await uploadOnCloudinary("salon", salonAvatarImageLocalPath);
 
         // If image not uploaded on cloudinary throw err
-        if (!salonCoverImageCloudinary) {
+        if (!salonAvatarImageCloudinary) {
             throw new ApiError(400, "Error while uploading the cover image");
         }
 
-        // console.log(`Updated salon cloudinary image url: ${salonCoverImageCloudinary.url}`)
+        // console.log(`Updated salon cloudinary image url: ${salonAvatarImageCloudinary.url}`)
         // console.log(`req.salon.?._id: ${req.salon?._id}`)
 
         // Commiting changes inside db
         const updatedSalon = await Salon.findByIdAndUpdate(
             req.salon?._id,
             {
-                $set: { salonImage: salonCoverImageCloudinary.url }
+                $set: { salonImage: salonAvatarImageCloudinary.url }
             },
             { new: true }
         ).select("-password -refreshToken -location -services -yearOfExperience -openingTime -closingTime -description");
@@ -429,23 +445,53 @@ const changeSalonCoverImage = asyncHandler(
 // Controller to delete salon account
 const deleteSalonAccount = asyncHandler(
     async (req, res) => {
-        // find salon from dd
-        // delete the salon from db
-        // return response
+        // find salon from db
+        // extract avatar image url from salon collection
+        // Delete cloudinary avatar image of salon
+        // Delete all services related to this salon from service collection
+        // Delete all expert related to this salon from salonExpert collection
+        // Now delete salon from collection 
+        // Validate whether salon is deleted or not
+        // Send response that salon is deleted
 
+        // Find salon from db
+        const salonFound = await Salon.findOne(req.salon._id);
+
+        // delete salon images from cloudinary
+        const isDeletedSalonImage = await deleteFromCloudinary("salon", salonFound.salonImage)
+
+        // If salon image not deleted then throw error
+        if (!isDeletedSalonImage) {
+            throw new ApiError(500, "Images not deleted from cloud")
+        }
+
+        // delete services that related to this salon
+        await deleteAllServices(req.salon?._id)
+
+        // delete salon experts image related to this salon
+        await deleteAllSalonExpertFromSalon(req.salon?._id)
+
+        // find salon and delete 
         await Salon.findByIdAndDelete(
             req.salon._id,
         );
 
-        const deletedAccount = Salon.findOne(req.salon._id);
+        // Finding salon whether it is deleted or not
+        const deletedAccount = await Salon.findOne(req.salon?._id);
 
-        if (!deletedAccount) {
+        // If salon is deleted from db then throw error
+        if (deletedAccount !== null) {
             throw new ApiError(500, "Salon not deleted")
         }
 
-        return res.status(200).json(new ApiResponse(200, "Salon has deleted successfully"))
+        // send response 
+        return res
+            .status(200)
+            .json(new ApiResponse(200,
+                `${salonFound.salonName} is deleted successfully`)
+            )
     }
-)
+);
 
 // Exporting all controllers
 export {
@@ -455,7 +501,7 @@ export {
     getCurrentSalon,
     refreshAccessToken,
     updateAccountDetail,
-    changeSalonCoverImage,
-    changeCurrentUserPassword,
+    changeSalonAvatarImage,
+    changeCurrentSalonPassword,
     deleteSalonAccount
 }
