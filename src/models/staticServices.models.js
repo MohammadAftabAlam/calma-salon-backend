@@ -10,7 +10,7 @@ const staticServiceSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        category: {
+        gender: {
             type: String,
             enum: ["men", "women"],
             required: true,
