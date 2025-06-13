@@ -3,10 +3,12 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/user.routes.js';
-import staticImagesRouter from './routes/staticServices.routes.js'
+import staticImagesRouter from './routes/staticServices.routes.js';
 
 import salonRouter from './routes/salon.routes.js';
-import salonServiceRouter from './routes/salonService.router.js'
+import salonServiceRouter from './routes/salonService.route.js';
+import serviceFilterRouter from './routes/salonServiceFilter.routes.js';
+import salonExpertRouter from './routes/salonExpert.routes.js'
 
 const app = express();
 
@@ -32,7 +34,7 @@ app.use(cookieParser())
 app.use(express.json({ limit: "16kb" }))
 
 //recieving data from url
-app.use(express.urlencoded({ extended: true, limit: "10kb"}))
+app.use(express.urlencoded({ extended: true, limit: "10kb" }))
 
 // user api link
 app.use("/api/v1/user", userRouter)
@@ -40,6 +42,8 @@ app.use("/api/v1/staticServices", staticImagesRouter)
 
 // salon api link
 app.use("/api/v1/salon", salonRouter)
+app.use("/api/v1/salon/1", salonExpertRouter)
 app.use("/api/v1/services", salonServiceRouter)
+app.use("/api/v1/services/filter", serviceFilterRouter)
 
 export default app
