@@ -5,8 +5,10 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import options from "../utils/cookie_opt.js";
-import User from "../models/user.models.js";
+import { DEFAULT_PROFILE_PHOTO_URL } from '../constant.js'
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
+import User from "../models/user.models.js";
 // import  from "../db/server.js";
 // const User = userModel(userDb);
 
@@ -33,29 +35,82 @@ const registerUser = asyncHandler(
     async (req, res) => {
         // find details from req
         // validate details
+        // validate avatarImage
+        // parse incoming location 
         // check user already exist by using phone number or email
-        // create user object -- create user entry in db
+        // Upload avatar image on cloudinary
+        // create user object --> create user entry in db
         // remove password and refreshToken from response
         // check whether user is created or not
         // return res
 
         // Destructuring req.body
-        const { name, age, gender, phoneNumber, email, password } = req.body
+        const { name, age, gender, phoneNumber, email, password, location } = req.body
 
         // Validating details filled by the user
         if ([name, gender, email, password].some((field) => { field?.trim() === "" })) {
             throw new ApiError(400, "All fields are required")
         }
 
+        if (!email.includes('@')) {
+            throw new ApiError(400, "Enter a valid email")
+        }
+
+        if (!phoneNumber) {
+            throw new ApiError(400, "Phone number is required")
+        }
+
+        if (!age) {
+            throw new ApiError(400, "Age is required")
+        }
+
+        // parsing location into object
+        const parsedLocation = JSON.parse(location)
+
+        // validating parsedLocation
+        if (!parsedLocation || parsedLocation.type !== 'Point' || !Array.isArray(parsedLocation.coordinates) || parsedLocation.coordinates.length !== 2) {
+            throw new ApiError(400, "Please provide a valid location in GeoJSON format");
+        }
+
         // Finding user with same phone number or email IF EXIST
-        const existedUser = await User.findOne(
+        const isUserExist = await User.findOne(
             { $or: [{ email }, { phoneNumber }] }
         )
-        // console.log(existedUser)
+        // console.log(isUserExist)
 
-        // if user is existed with same phoneNumher or email then Error will be raised
-        if (existedUser) {
-            throw new ApiError(409, "User existed with same email or phone number")
+        // if isUserExist then throw error
+        if (isUserExist) {
+
+            // If avatar image uploaded on cloudinary then destroy it
+            // if (!avatarImageCloudinary.url) {
+            //     await deleteFromCloudinary("user", avatarImageCloudinary.url)
+            // }
+
+            // throw error 
+            throw new ApiError(409, "User existed with same phone number or email")
+        }
+
+        let avatarImageLocalPath;
+        let avatarImageCloudinary;
+        let isDefaultProfilePic = true;         // It illustrates whether user used default picture as profile picture
+
+        // Validating avatar image
+        if (req.files && (Array.isArray(req.files.avatarImage) && req.files.avatarImage.length > 0)) {
+            avatarImageLocalPath = req.files.avatarImage[0].path;
+
+            // If avatarImageLocalPath has file path then upload it to cloud
+            if (avatarImageLocalPath) {
+                avatarImageCloudinary = await uploadOnCloudinary("user", avatarImageLocalPath);
+                avatarImageLocalPath = avatarImageCloudinary.url
+
+                // set default profile to false
+                isDefaultProfilePic = false
+            }
+        }
+
+        // If avatar file is not present then attach default user image url
+        if (!avatarImageLocalPath) {
+            avatarImageLocalPath = DEFAULT_PROFILE_PHOTO_URL
         }
 
         // Creating object of the user
@@ -65,6 +120,9 @@ const registerUser = asyncHandler(
             gender,
             phoneNumber,
             email,
+            avatarImage: avatarImageLocalPath,
+            isDefaultAvatarImage: isDefaultProfilePic,
+            location: parsedLocation,
             password,
         })
 
@@ -86,6 +144,7 @@ const registerUser = asyncHandler(
             )
     }
 );
+
 
 // Controller that facilitate the functionality of Login
 const loginUser = asyncHandler(
@@ -139,24 +198,53 @@ const loginUser = asyncHandler(
     }
 );
 
-// Controller that facilitate the functionality of Logout
-const logoutUser = asyncHandler(
+// Contoller to update user avatar image
+const updateUserAvatarImage = asyncHandler(
     async (req, res) => {
-        const user = await User.findByIdAndUpdate(
+
+        let userAvatarImageLocalPath;
+
+        // Validating upcoming image
+        if (req.files && (Array.isArray(req.files.userAvatarImage) && req.files.userAvatarImage.length > 0)) {
+            userAvatarImageLocalPath = req.files.userAvatarImage[0].path;
+        }
+
+        // Validating local path
+        if (!userAvatarImageLocalPath) {
+            throw new ApiError(400, "Avatar image file is missing");
+        }
+
+        // Cover Image is uploading on cloudinary
+        const userAvatarImageCloudinary = await uploadOnCloudinary("user", userAvatarImageLocalPath);
+
+        // If image not uploaded on cloudinary throw err
+        if (!userAvatarImageCloudinary) {
+            throw new ApiError(400, "Error while uploading the cover image");
+        }
+
+        // Commiting changes inside db
+        const updatedUser = await User.findByIdAndUpdate(
             req.user?._id,
             {
-                $set:
-                    { refreshToken: null }
-
+                $set: {
+                    avatarImage: userAvatarImageCloudinary.url,
+                    isDefaultAvatarImage: false
+                }
             },
             { new: true }
-        ).select("-password -refreshToken");
+        ).select("-password -refreshToken -location");
 
+        // validating whether db update is successfull or not
+        if (!updatedUser) {
+            throw new ApiError(500, "Something went wrong while updating db");
+        }
+
+        // return response
         res
             .status(200)
-            .clearCookie("accessToken", user?.accessToken, options)
-            .clearCookie("refreshToken", user?.refreshToken, options)
-            .json(new ApiResponse(200, "User has been logged out successfully"))
+            .json(
+                new ApiResponse(200, updatedUser, "Avatar image updated successfully")
+            )
     }
 );
 
@@ -211,10 +299,31 @@ const refreshAccessToken = asyncHandler(
     }
 )
 
-// Getting user details
-const getCurrentUser = asyncHandler(async (req, res) => {
-    return res.status(200).json(new ApiResponse(200, req.user, "Current User fetched successfully"));
-});
+// Controller to get current user profile
+const retreiveCurrentUser = asyncHandler(
+    async (req, res) => {
+        // fetching user from db
+        const user = await User.findOne({ _id: req.user._id })
+
+        // converting it to object
+        const userObject = user.toObject(user);
+
+        // deleting refresh Token from userObject
+        delete userObject.refreshToken;
+
+        // deleting password from userObject
+        delete userObject.password
+
+        // send res
+        return res
+            .status(200)
+            .json(new ApiResponse(
+                200,
+                { userObject },
+                "Current User fetched successfully")
+            );
+    }
+);
 
 // Controller to edit profile
 const updateAccountDetail = asyncHandler(
@@ -239,6 +348,7 @@ const updateAccountDetail = asyncHandler(
             },
             email
         })
+
         if (isEmailExist) {
             throw new ApiError(401, "Email already exist, use another one")
         }
@@ -260,7 +370,7 @@ const updateAccountDetail = asyncHandler(
             .json(
                 new ApiResponse(200,
                     { user: updatedUser },
-                    "Fields are updated Successfully"),
+                    "User name or email are updated Successfully"),
             )
     }
 );
@@ -306,14 +416,72 @@ const changeCurrentUserPassword = asyncHandler(
     }
 );
 
+// Controller that facilitate the functionality of Logout
+const logoutUser = asyncHandler(
+    async (req, res) => {
+        const user = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $set:
+                    { refreshToken: null }
+
+            },
+            { new: true }
+        ).select("-password -refreshToken");
+
+        res
+            .status(200)
+            .clearCookie("accessToken", user?.accessToken, options)
+            .clearCookie("refreshToken", user?.refreshToken, options)
+            .json(new ApiResponse(200, "User has logged out successfully"))
+    }
+);
+
+// Controller to delete user 
+const deleteUser = asyncHandler(
+    async (req, res) => {
+        // find user from db
+        const currentUser = await User.findById({ _id: req.user._id })
+
+        // If user is not using default avatar image then delete it from cloud
+        if (!currentUser.isDefaultAvatarImage) {
+            const isUserAvatarDeleted = await deleteFromCloudinary("user", currentUser.avatarImage)
+
+            // Verify whether user avatar is deleted from cloud or not
+            if (!isUserAvatarDeleted) {
+                throw new ApiError(500, "User avatar image not deleted from cloud");
+            }
+        }
+
+        // delete user from db
+        await User.findByIdAndDelete({ _id: req.user._id });
+
+        // Validate user is deleted or not from db
+        const isUserDeleted = User.findOne({ _id: req.user._id })
+
+        // If user not deleted then throw error
+        if (!isUserDeleted) {
+            throw new ApiError(500, "Something went wrong while deleting user from db")
+        }
+
+        // send res
+        return res
+            .status(200)
+            .json(new ApiResponse(200,
+                `${currentUser.name} is deleted successfully`
+            ))
+    }
+);
 
 
 export {
     registerUser,
     loginUser,
     logoutUser,
+    updateUserAvatarImage,
     refreshAccessToken,
     updateAccountDetail,
     changeCurrentUserPassword,
-    getCurrentUser
+    retreiveCurrentUser,
+    deleteUser
 }

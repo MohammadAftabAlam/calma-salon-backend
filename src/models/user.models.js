@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+
         age: {
             type: Number,
             required: true,
@@ -16,28 +17,55 @@ const userSchema = new mongoose.Schema(
                 message: '{VALUE} is not an integer value'
             }
         },
+
         gender: {
             type: String,
             enum: ['Male', 'Female'],
             default: 'Male',
             required: true
         },
+
         phoneNumber: {
             type: String,
             required: true,
             uniqe: true,
             // match: '/^[0-9]{10}$/',
         },
+
         email: {
             type: String,
             required: true,
             unique: true,
         },
+
+        avatarImage: {
+            type: String,       // cloudinary url
+            required: true,
+        },
+
+        isDefaultAvatarImage: {
+            type: Boolean,
+            default: true
+        },
+
+        location: {
+            type: {
+                type: String,
+                enum: ['Point'],
+                required: true
+            },
+            coordinates: {
+                type: [Number], // [longitude, latitude]
+                required: true
+            },
+        },
+
         password: {
             type: String,
             required: true,
             // match: `/^(?=.*[a/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/`
         },
+
         refreshToken: {
             type: String,
         }

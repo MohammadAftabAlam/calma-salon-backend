@@ -1,27 +1,32 @@
 import { Router } from "express";
 
 import { verifyUserWithJWT } from "../middlewares/user.auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 import {
     registerUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
     updateAccountDetail,
-    changeCurrentUserPassword
+    changeCurrentUserPassword,
+    retreiveCurrentUser,
+    updateUserAvatarImage,
+    deleteUser
 } from "../controllers/user.controller.js";
 
-// import { uploadStaticServicesImage, getAllStaticMenServices, getAllStaticWomenServices } from "../controllers/uploadImages.controller.js";
-
-// import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-// router.get("/aftab", (req, res) => {
-//     res.send("Aftab")
-// })
-
 // route to register user
-router.route("/register").post(registerUser);
+router.route("/register").post(
+    upload.fields([
+        {
+            name: "avatarImage",
+            maxCount: 1
+        }
+    ]),
+    registerUser
+);
 
 // route to login user
 router.route("/login").post(loginUser);
@@ -29,32 +34,43 @@ router.route("/login").post(loginUser);
 //logout route
 router.route("/logout").post(verifyUserWithJWT, logoutUser);
 
-//edit profile route
-router.route("/edit-profile").put(verifyUserWithJWT, updateAccountDetail);
+//route to update profile
+router.route("/update-profile").put(verifyUserWithJWT, updateAccountDetail);
 
-//change password route
-router.route("/change-password").put(verifyUserWithJWT, changeCurrentUserPassword);
+//route to update avatarImage
+router.route("/update-avatarImage").put(
+    verifyUserWithJWT,
+    upload.fields([
+        {
+            name: "avatarImage",
+            maxCount: 1
+        }
+    ]),
+    updateAccountDetail
+);
 
-// refresh token route
-router.route("/refresh-token").put(verifyUserWithJWT, refreshAccessToken);
+//route to update password
+router.route("/update-password").put(verifyUserWithJWT, changeCurrentUserPassword);
 
+// route to refresh accesstoken
+router.route("/update-accessToken").put(verifyUserWithJWT, refreshAccessToken);
 
-// services route
-// router.route("/addServices").post(
-//     upload.fields(
-//         [{
-//             name: "serviceImage",
-//             maxCount: 1
-//         }]
-//     ),
-//     uploadStaticServicesImage
-// );
+// route to update profile pic
+router.route("/update-avatarImage").put(
+    verifyUserWithJWT,
+    upload.fields([
+        {
+            name: "userAvatarImage",
+            maxCount: 1
+        }
+    ]),
+    updateUserAvatarImage
+);
 
+// route to get current user profile
+router.route('/retrieve-currentUser').get(verifyUserWithJWT, retreiveCurrentUser)
 
-// get all men static services
-// router.route("/getMenServices").get(getAllStaticMenServices);
-
-// get all women static services
-// router.route("/getWoenServices").get(getAllStaticWomenServices);
+// route to delete current user
+router.route("/delete-user").delete(verifyUserWithJWT, deleteUser)
 
 export default router
