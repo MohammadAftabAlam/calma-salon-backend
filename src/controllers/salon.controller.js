@@ -277,16 +277,16 @@ const refreshAccessToken = asyncHandler(
             }
 
             // Generate a new access token
-            const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(salon?._id);
+            const { accessToken, refreshToken } = await generateAccessAndRefreshToken(salon?._id);
 
             // sending response 
             res
                 .status(200)
-                .cookie("refreshToken", newRefreshToken, options)
+                .cookie("refreshToken", refreshToken, options)
                 .cookie("accessToken", accessToken, options)
                 .json(
                     new ApiResponse(200,
-                        { accessToken, "refreshToken": newRefreshToken },
+                        { accessToken, refreshToken },
                         "Access token has been refreshed successfully"
                     )
                 );
