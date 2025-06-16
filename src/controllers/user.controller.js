@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
 
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -204,14 +205,43 @@ const updateUserAvatarImage = asyncHandler(
 
         let userAvatarImageLocalPath;
 
-        // Validating upcoming image
-        if (req.files && (Array.isArray(req.files.userAvatarImage) && req.files.userAvatarImage.length > 0)) {
-            userAvatarImageLocalPath = req.files.userAvatarImage[0].path;
+        // Validiting file
+        if (req.file) {
+            userAvatarImageLocalPath = req.file?.path
         }
 
         // Validating local path
         if (!userAvatarImageLocalPath) {
             throw new ApiError(400, "Avatar image file is missing");
+        }
+
+        // validating type of image
+        if (!(req.file.mimetype === 'image/jpeg' || req.file.mimetype === 'image/jpg' || req.file.mimetype === 'image/png')) {
+
+            // deleting locally stored image
+            fs.unlinkSync(userAvatarImageLocalPath);
+
+            // throwing error
+            throw new ApiError(400, "Avatar image is must be of jpg, jpeg or png type")
+        }
+
+        // Validating multiple file simulatenously
+        /*
+        // Validating upcoming image
+        if (req.files && (Array.isArray(req.files.userAvatarImage) && req.files.userAvatarImage.length > 0)) {
+            userAvatarImageLocalPath = req.files.userAvatarImage[0].path;
+        }
+
+        // validating type of image
+        if (!(req.files.userAvatarImage[0].mimetype === 'image/jpeg' || req.files.userAvatarImage[0].mimetype === 'image/jpg' || req.files.userAvatarImage[0].mimetype === 'image/png')) {
+            throw new ApiError(400, "Avatar image is must be of jpg, jpeg or png type")
+        }
+        */
+
+        // finding user from db
+        const user = await User.findById({ _id: req.user._id });
+        if (!user) {
+            throw new ApiError(404, "User not found")
         }
 
         // Cover Image is uploading on cloudinary
@@ -220,6 +250,10 @@ const updateUserAvatarImage = asyncHandler(
         // If image not uploaded on cloudinary throw err
         if (!userAvatarImageCloudinary) {
             throw new ApiError(400, "Error while uploading the cover image");
+        }
+
+        if (!user.isDefaultAvatarImage) {
+            await deleteFromCloudinary("user", user.avatarImage)
         }
 
         // Commiting changes inside db
@@ -280,16 +314,16 @@ const refreshAccessToken = asyncHandler(
             }
 
             // Generate a new access token
-            const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user?._id)
+            const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user?._id)
 
             // sending response 
             res
                 .status(200)
-                .cookie("refreshToken", newRefreshToken, options)
+                .cookie("refreshToken", refreshToken, options)
                 .cookie("accessToken", accessToken, options)
                 .json(
                     new ApiResponse(200,
-                        { accessToken, "refreshToken": newRefreshToken },
+                        { accessToken, refreshToken },
                         "Access token has been refreshed successfully"
                     )
                 )
@@ -477,11 +511,11 @@ const deleteUser = asyncHandler(
 export {
     registerUser,
     loginUser,
-    logoutUser,
-    updateUserAvatarImage,
+    retreiveCurrentUser,
     refreshAccessToken,
+    updateUserAvatarImage,
     updateAccountDetail,
     changeCurrentUserPassword,
-    retreiveCurrentUser,
+    logoutUser,
     deleteUser
 }

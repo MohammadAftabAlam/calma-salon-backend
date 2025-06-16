@@ -38,32 +38,27 @@ router.route("/logout").post(verifyUserWithJWT, logoutUser);
 router.route("/update-profile").put(verifyUserWithJWT, updateAccountDetail);
 
 //route to update avatarImage
-router.route("/update-avatarImage").put(
-    verifyUserWithJWT,
-    upload.fields([
-        {
-            name: "avatarImage",
-            maxCount: 1
-        }
-    ]),
-    updateAccountDetail
-);
+// router.route("/update-profileImage").put(
+//     verifyUserWithJWT,
+//     upload.fields([
+//         {
+//             name: "avatarImage",
+//             maxCount: 1
+//         }
+//     ]),
+//     updateAccountDetail
+// );
 
 //route to update password
 router.route("/update-password").put(verifyUserWithJWT, changeCurrentUserPassword);
 
 // route to refresh accesstoken
-router.route("/update-accessToken").put(verifyUserWithJWT, refreshAccessToken);
+router.route("/update-token").put(refreshAccessToken);
 
 // route to update profile pic
 router.route("/update-avatarImage").put(
     verifyUserWithJWT,
-    upload.fields([
-        {
-            name: "userAvatarImage",
-            maxCount: 1
-        }
-    ]),
+    upload.single("userAvatarImage"),
     updateUserAvatarImage
 );
 
