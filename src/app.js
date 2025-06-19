@@ -9,6 +9,7 @@ import salonRouter from './routes/salon.routes.js';
 import salonServiceRouter from './routes/salonService.route.js';
 import serviceFilterRouter from './routes/salonServiceFilter.routes.js';
 import salonExpertRouter from './routes/salonExpert.routes.js'
+import nearestSalonRouter from './routes/nearestSalon.routes.js'
 
 const app = express();
 
@@ -45,5 +46,7 @@ app.use("/api/v1/salon", salonRouter)
 app.use("/api/v1/salon/1", salonExpertRouter)
 app.use("/api/v1/services", salonServiceRouter)
 app.use("/api/v1/services/filter", serviceFilterRouter)
+
+app.use("/api/v1/nearestSalon", nearestSalonRouter)
 
 export default app
