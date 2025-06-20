@@ -4,12 +4,12 @@ import SalonExpert from '../models/salonExperts.model.js'
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { findNearestSalonWithin4KmToUserFn } from './nearest_salon.controller.js';
+import { getNearyBySalons } from './nearest_salon.controller.js';
 
 
 const findNearestSalonExpert = async (req, res) => {
     const { userLat, userLong } = req.body;
-    const nearestSalonFound = await findNearestSalonWithin4KmToUserFn(userLat, userLong);
+    const nearestSalonFound = await getNearyBySalons(userLat, userLong);
 
     let nearestSalonExpertFound = [];
 
