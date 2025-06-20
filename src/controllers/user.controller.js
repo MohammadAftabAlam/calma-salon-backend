@@ -46,10 +46,10 @@ const registerUser = asyncHandler(
         // return res
 
         // Destructuring req.body
-        const { name, age, gender, phoneNumber, email, password, location } = req.body
+        const { name, age, gender, phoneNumber, email, password, location, fullAddress } = req.body
 
         // Validating details filled by the user
-        if ([name, gender, email, password].some((field) => { field?.trim() === "" })) {
+        if ([name, gender, email, password, fullAddress].some((field) => { field?.trim() === "" })) {
             throw new ApiError(400, "All fields are required")
         }
 
@@ -125,6 +125,7 @@ const registerUser = asyncHandler(
             isDefaultAvatarImage: isDefaultProfilePic,
             location: parsedLocation,
             password,
+            fullAddress
         })
 
         // Creating user in the database and removing password and refreshToken from the response that will be sent to frontend
@@ -353,7 +354,7 @@ const retreiveCurrentUser = asyncHandler(
             .status(200)
             .json(new ApiResponse(
                 200,
-                { userObject },
+                userObject,
                 "Current User fetched successfully")
             );
     }

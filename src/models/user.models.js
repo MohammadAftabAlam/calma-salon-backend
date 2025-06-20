@@ -66,6 +66,10 @@ const userSchema = new mongoose.Schema(
             // match: `/^(?=.*[a/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/`
         },
 
+        fullAddress: {
+            type: String,
+        },
+
         refreshToken: {
             type: String,
         }

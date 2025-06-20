@@ -75,6 +75,10 @@ const salonSchema = new mongoose.Schema(
             max: 5,
         },
 
+        fullAddress: {
+            type: String,
+        },
+
         refreshToken: {
             type: String,
         }

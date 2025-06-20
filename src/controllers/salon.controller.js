@@ -51,10 +51,22 @@ const registerSalon = asyncHandler(
 
     async (req, res) => {
         // Destructing the request body
-        const { salonName, phoneNumber, email, services, description, location, yearOfExperience, openingTime, closingTime, password } = req.body;
+        const {
+            salonName,
+            phoneNumber,
+            email,
+            services,
+            description,
+            location,
+            yearOfExperience,
+            openingTime,
+            closingTime,
+            password,
+            fullAddress
+        } = req.body;
 
         // validating required fields
-        if ([salonName, phoneNumber, email, description, yearOfExperience, openingTime, closingTime, password].some((field) => { return field?.trim() === "" })) {
+        if ([salonName, phoneNumber, email, description, yearOfExperience, openingTime, closingTime, password], fullAddress.some((field) => { return field?.trim() === "" })) {
             throw new ApiError(400, "All fields are required");
         }
 
@@ -131,6 +143,7 @@ const registerSalon = asyncHandler(
             closingTime: parsedClosingTime,
             password,
             salonImage: salonImageCloudinary.url,
+            fullAddress
         })
 
         // validating whether salon is created or not
