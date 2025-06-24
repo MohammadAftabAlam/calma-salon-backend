@@ -9,7 +9,7 @@ import salonRouter from './routes/salon.routes.js';
 import salonServiceRouter from './routes/salonService.route.js';
 import serviceFilterRouter from './routes/salonServiceFilter.routes.js';
 import salonExpertRouter from './routes/salonExpert.routes.js'
-import nearestSalonRouter from './routes/nearestSalon.routes.js'
+import nearestSalonRouter from './routes/nearbySalons.routes.js'
 
 const app = express();
 

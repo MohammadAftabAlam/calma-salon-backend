@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -66,7 +67,7 @@ const registerSalon = asyncHandler(
         } = req.body;
 
         // validating required fields
-        if ([salonName, phoneNumber, email, description, yearOfExperience, openingTime, closingTime, password], fullAddress.some((field) => { return field?.trim() === "" })) {
+        if ([salonName, phoneNumber, email, description, yearOfExperience, openingTime, closingTime, password, fullAddress].some((field) => { return field.trim() === "" })) {
             throw new ApiError(400, "All fields are required");
         }
 
