@@ -1,0 +1,26 @@
+Copyright 2025 Mohammad Aftab Alam
+
+This product includes software developed by Mohammad Aftab Alam.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+---
+
+Third-party libraries used in this project:
+
+- Node.js (https://nodejs.org) — Licensed under the MIT License  
+- Express.js (https://expressjs.com) — Licensed under the MIT License  
+- MongoDB (https://mongodb.com) — Licensed under the Server Side Public License (SSPL)  
+- Mongoose (https://mongoosejs.com) — Licensed under the MIT License  
+- bcrypt (https://github.com/kelektiv/node.bcrypt.js) — Licensed under the MIT License  
+- jsonwebtoken (https://github.com/auth0/node-jsonwebtoken) — Licensed under the MIT License
