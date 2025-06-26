@@ -1,47 +1,49 @@
-# Calma 
+# Calma Salon Backend
 
-Calma is an Android application that helps users book appointments at salons quickly and easily.  
-This repository contains the complete backend codebase that powers the Calma application, including APIs for user authentication, salon management, service listings, and appointment handling.
+**Calma** is an Android-based salon appointment booking app. This repository contains the complete backend codebase built with **Node.js**, **Express.js**, and **MongoDB**. It powers the Calma app's user authentication, salon management, service listings, payments, and appointment handling.
 
----
 
-## 🚀 Tech Stack
 
-- **Node.js**
-- **Express.js**
-- **MongoDB**
-- **Mongoose**
+## Features
 
----
+- 🔐 **User Authentication** – Register/login with secured credentials using JWT & bcrypt.
+- 📍 **Location-Based Search** – Find salons within a 4 km radius based on current location.
+- 🧖 **Service Listings** – View detailed salon services and prices.
+- 💇‍♂️ **Expert Selection** – Book specific experts for your service.
+- 📆 **Appointment Booking** – Schedule appointments directly in the app.
+- 🔄 **Rescheduling** – Request new slots in emergencies.
+- ❌ **Cancellations** – Cancel appointments with valid reasons.
+- 💳 **Secure Payments** – Integrated Razorpay support (UPI, card, cash).
 
-## ✨ Features
 
-- **Personalized Experience** – User-friendly interface with tailored service recommendations.  
-- **Service Listings** – View detailed lists of services offered by various salons.  
-- **Expert Selection** – Choose from different salon experts for services.  
-- **Location-Based Search** – Discover salons within a 4 km radius using the user’s current location.  
-- **Payment Gateway** – Accepts UPI, card, and cash payments.  
-- **Appointment Booking** – Easily book appointments with your preferred salon and service expert.  
-- **Emergency Rescheduling** – Request a time change in emergencies.  
-- **Appointment Cancellation** – Cancel appointments by providing a valid reason.
+## Tech Stack
 
----
-
-## Usage
-
-1. Open the application on your Android device.
-2. Sign up or log in to your account.
-3. Allow the application to access your live location.
-4. Browse the listed salons and their services.
-5. Choose a service and select an expert.
-6. Book an appointment by selecting a suitable time slot.
-7. Complete the payment using UPI, card, or choose cash payment.
-8. In case of an emergency, reschedule the appointment from the dashboard.
-9. To cancel an appointment, provide an appropriate reason and proceed.
+| Tool          | Purpose                      |
+|---------------|------------------------------|
+| Node.js       | Backend runtime              |
+| Express.js    | Server framework             |
+| MongoDB       | Database                     |
+| Mongoose      | ODM for MongoDB              |
+| JWT, bcrypt   | Authentication & Security    |
+| Razorpay API  | Payment gateway integration  |
 
 ---
 
-## 🛠️ Installation
+## Folder Structure
+```txt
+calma-salon-backend/
+│
+├── controllers/ # Route handlers
+├── middleware/z # Auth & error middleware
+├── db/ # Database connection & config
+├── models/ # Mongoose schemas
+├── routes/ # Express route definitions
+├── utils/ # Helper utilities
+├── .env.example # Environment variable template
+├── README.md # Project info
+```
+
+## Installation
 
 To run the backend locally:
 
@@ -64,7 +66,31 @@ To run the backend locally:
     ```bash
     npm run dev
 
----
+
+
+##  Api Endpoints
+| Method |          Endpoint         |         Description          |
+| ------ | ----------------------    | -----------------------------|
+| POST   | `/api/v1/users/register`  | Register new users           |
+| POST   | `/api/v1/users/login`     | User login                   |
+| POST   | `/api/v1/salon/register`  | Register new users           |
+| GET    | `/api/v1/salons/nearby`   | Find nearby salons           |
+
+    Full API documentation coming soon (via Swagger/Postman collection)
+
+
+## Usage
+
+1. Open the application on your Android device.
+2. Sign up or log in to your account.
+3. Allow the application to access your live location.
+4. Browse the listed salons and their services.
+5. Choose a service and select an expert.
+6. Book an appointment by selecting a suitable time slot.
+7. Complete the payment using UPI, card, or choose cash payment.
+8. In case of an emergency, reschedule the appointment from the dashboard.
+9. To cancel an appointment, provide an appropriate reason and proceed.
+
 
 ## Contribution
 
@@ -88,9 +114,12 @@ To contribute:
 5. Create a pull request
 
 ## Author
-- Md Aftab Alam (me)
+`Mohammad Aftab Alam (me)`
 
----
+
+## License
+This project is licensed under the `Apache License 2.0`.
+
 
 ## Contact
 
