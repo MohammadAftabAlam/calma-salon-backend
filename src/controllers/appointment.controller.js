@@ -36,6 +36,11 @@ const createAppointment = asyncHandler(
             throw new ApiError(400, "All fields are required")
         }
 
+        const parsedDateAndTime = convertTimeStringToDate(date, timeSlot);
+        if (!parsedDateAndTime) {
+            throw new ApiError(400, "Enter a valid date and time")
+        }
+
 
     }
 );
